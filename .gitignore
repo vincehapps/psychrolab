@@ -1,0 +1,7 @@
+node_modules
+.DS_Store
+.svelte-kit
+.svelte-ignore
+.env
+node_modules
+.turbo
