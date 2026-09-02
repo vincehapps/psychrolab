@@ -31,9 +31,14 @@
 
   <!-- Footer -->
   <footer class="border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-400 font-mono">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+    <div class="max-w-8xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
       <div>PsychroLab © 2026 — High-Precision Thermodynamic & HVAC Engineering Tools</div>
       <div class="text-slate-400">ASHRAE 2017 Handbook Standards • SI & IP Systems</div>
+      <div class="flex justify-center gap-3">
+        <div class="text-slate-400"><a href="/about" class="text-blue-400 hover:underline">About</a></div>
+        <div class="text-slate-400"><a href="/privacy" class="text-blue-400 hover:underline">Privacy Policy</a></div>
+        <div class="text-slate-400"><a href="/terms" class="text-blue-400 hover:underline">Terms and Conditions</a></div>
+      </div>
     </div>
   </footer>
 </div>

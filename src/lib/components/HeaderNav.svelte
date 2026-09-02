@@ -19,9 +19,7 @@
     <!-- Logo & Main Page Navigation Links -->
     <div class="flex items-center space-x-6">
       <a href="/" class="flex items-center space-x-3 group">
-        <div class="w-9 h-9 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-md group-hover:scale-105 transition-transform">
-          <LineChart class="w-5 h-5" />
-        </div>
+        <img src="/favicon.png" alt="Logo" class="w-12 h-12" />
         <div>
           <div class="flex items-center space-x-2">
             <span class="text-lg font-bold tracking-tight text-white group-hover:text-blue-300 transition-colors">PsychroLab</span>

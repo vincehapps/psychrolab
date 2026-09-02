@@ -74,7 +74,7 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
     {#each $pointsInputStore as pt (pt.id)}
       <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800 hover:border-slate-700/80 transition-colors flex flex-col justify-between space-y-2.5">
         

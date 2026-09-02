@@ -1,0 +1,10 @@
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Explicitly allow Google AdSense crawler to inspect pages for ad serving
+User-agent: Mediapartners-Google
+Allow: /
+
+# Provide link to your XML sitemap for SEO indexing
+Sitemap: https://www.psychrolab.org/sitemap.xml
