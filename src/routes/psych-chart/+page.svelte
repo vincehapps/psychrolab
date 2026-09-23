@@ -18,7 +18,7 @@
   <PsychroChart />
 
   <!-- Ad Banner Slot -->
-  <AdSlot slotId="psych-top" label="Engineering Sponsor" />
+  <!-- <AdSlot slotId="psych-top" label="Engineering Sponsor" /> -->
 
   <!-- Multi-State Inputs & Delta Analysis Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
