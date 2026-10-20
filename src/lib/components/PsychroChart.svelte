@@ -433,8 +433,8 @@
                 />
                 <g transform="translate({wbLine.labelPt.x}, {wbLine.labelPt.y}) rotate({wbLine.labelPt.angle})">
                   <text
-                    x="18"
-                    y="9"
+                    x="-14"
+                    y="3"
                     fill="#22d3ee"
                     font-size="9"
                     font-family="JetBrains Mono"
@@ -461,8 +461,8 @@
             {#if hLine.satIntersect}
               <g transform="translate({hLine.satIntersect.x}, {hLine.satIntersect.y}) rotate({hLine.satIntersect.angle})">
                 <text
-                  x="-14"
-                  y="-3"
+                  x="-36"
+                  y="2"
                   fill="#10b981"
                   font-size="9"
                   font-family="JetBrains Mono"
