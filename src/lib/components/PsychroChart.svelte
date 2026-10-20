@@ -42,7 +42,7 @@
       const pws = getSatVaporPressureSI(tSI);
       const wSI = getHumRatioFromVapPress(pws, pPa);
       const wDisp = isSI ? wSI : wSI * 7000;
-      
+
       const x = xScale(tDisp);
       const y = yScale(Math.min(wMax, wDisp));
       points.push(`${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`);
@@ -122,7 +122,7 @@
         const tDisp = tMin + (i / steps) * (tMax - tMin);
         const tSI = isSI ? tDisp : fToC(tDisp);
         const hSI = isSI ? hVal : hVal / 0.4299;
-        
+
         // Solve W from h and T
         const wSI = (hSI - 1.006 * tSI) / (2501 + 1.86 * tSI);
         const wDisp = isSI ? wSI : wSI * 7000;
@@ -161,7 +161,63 @@
       return { val: hVal, path: pathD, satIntersect };
     }).filter(Boolean);
   })();
+  // Constant Wet-Bulb Temperature Guidelines (Tw lines, oblique axis inline with enthalpy)
+  // ASHRAE relation (same as engine.ts):
+  // W = ((2501 - 2.326 * Twb) * Wsat(Twb) - 1.006 * (Tdb - Twb)) / (2501 + 1.86 * Tdb - 4.186 * Twb)
+  $: wetBulbLines = (() => {
+    const twStep = isSI ? 2 : 5;
+    const twMinVal = isSI ? 0 : 30;
+    const twMaxVal = isSI ? 50 : 120;
 
+    const twValues: number[] = [];
+    for (let tw = twMinVal; tw <= twMaxVal; tw += twStep) {
+      twValues.push(tw);
+    }
+
+    return twValues.map((twVal) => {
+      const twbSI = isSI ? twVal : fToC(twVal);
+      const pwsTwb = getSatVaporPressureSI(twbSI);
+      const wSatTwbSI = getHumRatioFromVapPress(pwsTwb, pPa);
+
+      const points: { x: number; y: number }[] = [];
+      const steps = 60;
+      const tStart = Math.max(tMin, twVal);
+
+      for (let i = 0; i <= steps; i++) {
+        const tDisp = tStart + (i / steps) * (tMax - tStart);
+        const tSI = isSI ? tDisp : fToC(tDisp);
+
+        // Solve W at constant wet-bulb temperature
+        const wSI =
+          ((2501 - 2.326 * twbSI) * wSatTwbSI - 1.006 * (tSI - twbSI)) /
+          (2501 + 1.86 * tSI - 4.186 * twbSI);
+        const wDisp = isSI ? wSI : wSI * 7000;
+
+        // Saturation W at this dry-bulb temperature
+        const pws = getSatVaporPressureSI(tSI);
+        const wSatSI = getHumRatioFromVapPress(pws, pPa);
+        const wSatDisp = isSI ? wSatSI : wSatSI * 7000;
+
+        // Line must be inside chart domain and below/at the saturation curve
+        if (wDisp >= wMin && wDisp <= wMax && wDisp <= wSatDisp + 0.001) {
+          points.push({ x: xScale(tDisp), y: yScale(wDisp) });
+        }
+      }
+
+      if (points.length < 2) return null;
+
+      const pFirst = points[0];
+      const pNext = points[Math.min(5, points.length - 1)];
+      const dx = pNext.x - pFirst.x;
+      const dy = pNext.y - pFirst.y;
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      const pathD = points.map((pt, idx) => `${idx === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join(' ');
+
+      // Label placed at the saturation-curve intersection (diagonal scale, inline with enthalpy)
+      return { val: twVal, path: pathD, labelPt: { x: pFirst.x, y: pFirst.y, angle } };
+    }).filter(Boolean);
+  })();
   // Live Cursor Inspector State
   let cursorX = 0;
   let cursorY = 0;
@@ -321,7 +377,7 @@
 </script>
 
 <div class="relative glass-panel rounded-2xl p-4 border border-slate-800 shadow-xl overflow-hidden">
-  
+
   <!-- Header bar -->
   <div class="flex items-center justify-between mb-2">
     <div class="flex items-center space-x-2">
@@ -343,6 +399,10 @@
         <span>Enthalpy (h) Lines</span>
       </span>
       <span class="flex items-center space-x-1">
+          <span class="w-2.5 h-0.5 bg-cyan-400 rounded"></span>
+          <span>Wet-Bulb (T<sub>w</sub>) Lines</span>
+        </span>
+        <span class="flex items-center space-x-1">
         <span class="w-2.5 h-0.5 bg-amber-400/80 rounded"></span>
         <span>Process Path</span>
       </span>
@@ -351,7 +411,7 @@
 
   <!-- SVG Psychrometric Chart Canvas -->
   <div class="relative w-full aspect-[17/10] bg-slate-950/80 rounded-xl border border-slate-800 overflow-hidden cursor-crosshair">
-    
+
     <svg
       id="psychro-svg-canvas"
       viewBox="0 0 {width} {height}"
@@ -360,7 +420,33 @@
       on:mouseleave={handleMouseLeave}
     >
       <g transform="translate({margin.left}, {margin.top})">
-        
+          <!-- Constant Wet-Bulb Temperature Guidelines (Oblique Tw lines & diagonal scale labels) -->
+            {#each wetBulbLines as wbLine}
+              {#if wbLine}
+                <path
+                  d={wbLine.path}
+                  fill="none"
+                  stroke="#22d3ee"
+                  stroke-width="1"
+                  stroke-dasharray="2 3"
+                  opacity="0.7"
+                />
+                <g transform="translate({wbLine.labelPt.x}, {wbLine.labelPt.y}) rotate({wbLine.labelPt.angle})">
+                  <text
+                    x="18"
+                    y="9"
+                    fill="#22d3ee"
+                    font-size="9"
+                    font-family="JetBrains Mono"
+                    font-weight="bold"
+                    text-anchor="end"
+                  >
+                    {wbLine.val}°
+                  </text>
+                </g>
+              {/if}
+            {/each}
+
         <!-- Constant Enthalpy Guidelines (Oblique h lines & diagonal scale labels) -->
         {#each enthalpyLines as hLine}
           {#if hLine}

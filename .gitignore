@@ -6,3 +6,4 @@ build
 .env
 node_modules
 .turbo
+.freebuff/
