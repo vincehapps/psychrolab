@@ -116,8 +116,8 @@
             </a>
             <div class="my-1 border-t border-slate-800"></div>
             <a
-              href="#steam-tables"
-              on:click|preventDefault={() => alert('Steam Tables Tool module preview in development.')}
+              href="/steam-tables"
+              on:click={() => (exploreDropdownOpen = false)}
               class="flex items-center space-x-2 px-2.5 py-2 rounded-lg text-xs text-slate-200 hover:bg-blue-600/20 hover:text-blue-300 transition-colors"
             >
               <Thermometer class="w-3.5 h-3.5 text-cyan-400" />
