@@ -13,7 +13,9 @@
     "@sveltejs/adapter-vercel": "^6.3.4",
     "@sveltejs/kit": "^2.16.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.0.0",
+    "mdsvex": "^0.12.8",
     "svelte": "^5.16.0",
     "svelte-check": "^4.1.0",
     "tailwindcss": "^4.0.0",
@@ -24,6 +26,7 @@
     "@lucide/svelte": "^1.37.0",
     "@types/d3-scale": "^4.0.8",
     "@types/d3-shape": "^3.1.7",
+    "coolprop-wasm": "^6.6.0",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",
     "psychrolib": "^1.1.1"

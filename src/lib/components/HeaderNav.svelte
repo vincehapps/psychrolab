@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { settingsStore, setUnitSystem, showSettingsModal, triggerShare } from '../stores/appStore';
-  import { LineChart, Compass, Settings, ChevronDown, Wrench, Thermometer, Share2 } from '@lucide/svelte';
+  import { LineChart, Compass, Settings, ChevronDown, Wrench, Thermometer, Share2, BookOpen, Snowflake, Gauge, Wind, Activity } from '@lucide/svelte';
 
   let exploreDropdownOpen = false;
 
@@ -15,7 +15,7 @@
 
 <header class="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80 px-4 py-3">
   <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-    
+
     <!-- Logo & Main Page Navigation Links -->
     <div class="flex items-center space-x-6">
       <a href="/" class="flex items-center space-x-3 group">
@@ -32,28 +32,9 @@
       </a>
     </div>
 
-    <!-- Page Switcher Tabs: /psych-chart vs /mollier -->
-    <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800">
-      <a
-        href="/psych-chart"
-        class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 {isPsychPage ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}"
-      >
-        <LineChart class="w-3.5 h-3.5" />
-        <span>Psychrometric Chart</span>
-      </a>
-
-      <a
-        href="/mollier"
-        class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 {isMollierPage ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}"
-      >
-        <Compass class="w-3.5 h-3.5" />
-        <span>Mollier Diagram</span>
-      </a>
-    </div>
-
     <!-- Right Controls: Unit Switcher, Explore Tools, Settings -->
     <div class="flex items-center space-x-3">
-      
+
       <!-- Unit System Switcher -->
       <div class="flex items-center bg-slate-900/90 p-1 rounded-lg border border-slate-800">
         <button
@@ -126,9 +107,65 @@
                 <div class="text-[10px] text-slate-400">Thermodynamic water vapor states</div>
               </div>
             </a>
+            <div class="my-1 border-t border-slate-800"></div>
+            <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 px-2 py-1">Design Calculators</div>
+            <a
+              href="/vapor-compression"
+              on:click={() => (exploreDropdownOpen = false)}
+              class="flex items-center space-x-2 px-2.5 py-2 rounded-lg text-xs text-slate-200 hover:bg-blue-600/20 hover:text-blue-300 transition-colors"
+            >
+              <Snowflake class="w-3.5 h-3.5 text-cyan-400" />
+              <div>
+                <div class="font-semibold">Vapor Compression Cycle</div>
+                <div class="text-[10px] text-slate-400">COP, state points & live p–h diagram</div>
+              </div>
+            </a>
+            <a
+              href="/ph-chart"
+              on:click={() => (exploreDropdownOpen = false)}
+              class="flex items-center space-x-2 px-2.5 py-2 rounded-lg text-xs text-slate-200 hover:bg-blue-600/20 hover:text-blue-300 transition-colors"
+            >
+              <Activity class="w-3.5 h-3.5 text-emerald-400" />
+              <div>
+                <div class="font-semibold">Refrigerant p–h Chart</div>
+                <div class="text-[10px] text-slate-400">Pressure–enthalpy diagram for 6 refrigerants</div>
+              </div>
+            </a>
+            <a
+              href="/cooling-load"
+              on:click={() => (exploreDropdownOpen = false)}
+              class="flex items-center space-x-2 px-2.5 py-2 rounded-lg text-xs text-slate-200 hover:bg-blue-600/20 hover:text-blue-300 transition-colors"
+            >
+              <Gauge class="w-3.5 h-3.5 text-amber-400" />
+              <div>
+                <div class="font-semibold">Cooling Load Calculator</div>
+                <div class="text-[10px] text-slate-400">Sensible/latent gains, SHR & airflow</div>
+              </div>
+            </a>
+            <a
+              href="/duct-sizing"
+              on:click={() => (exploreDropdownOpen = false)}
+              class="flex items-center space-x-2 px-2.5 py-2 rounded-lg text-xs text-slate-200 hover:bg-blue-600/20 hover:text-blue-300 transition-colors"
+            >
+              <Wind class="w-3.5 h-3.5 text-blue-400" />
+              <div>
+                <div class="font-semibold">Duct Sizing Calculator</div>
+                <div class="text-[10px] text-slate-400">Equal friction & velocity methods</div>
+              </div>
+            </a>
           </div>
         {/if}
       </div>
+
+      <!-- Engineering Guides (tutorials & written guides) -->
+      <a
+        href="/guides"
+        title="Engineering guides and tutorials"
+        class="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 rounded-lg text-xs font-medium text-slate-200 transition-colors"
+      >
+        <BookOpen class="w-3.5 h-3.5 text-emerald-400" />
+        <span class="hidden sm:inline">Guides</span>
+      </a>
 
       <!-- Share State Points & Configuration Button -->
       <button

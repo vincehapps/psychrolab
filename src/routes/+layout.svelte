@@ -2,6 +2,7 @@
   import '../app.css';
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
+  import { browser } from '$app/environment';
   import HeaderNav from '$lib/components/HeaderNav.svelte';
   import SettingsModal from '$lib/components/SettingsModal.svelte';
   import ShareModal from '$lib/components/ShareModal.svelte';
@@ -14,7 +15,8 @@
     }
   });
 
-  $: if ($page.url.searchParams.has('share')) {
+  // Client-only: url.searchParams cannot be read while prerendering.
+  $: if (browser && $page.url.searchParams.has('share')) {
     loadStateFromUrl($page.url.searchParams);
   }
 </script>
@@ -35,6 +37,7 @@
       <div>PsychroLab © 2026 — High-Precision Thermodynamic & HVAC Engineering Tools</div>
       <div class="text-slate-400">ASHRAE 2017 Handbook Standards • SI & IP Systems</div>
       <div class="flex justify-center gap-3">
+        <div class="text-slate-400"><a href="/guides" class="text-blue-400 hover:underline">Guides</a></div>
         <div class="text-slate-400"><a href="/about" class="text-blue-400 hover:underline">About</a></div>
         <div class="text-slate-400"><a href="/privacy" class="text-blue-400 hover:underline">Privacy Policy</a></div>
         <div class="text-slate-400"><a href="/terms" class="text-blue-400 hover:underline">Terms and Conditions</a></div>
