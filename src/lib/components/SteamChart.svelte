@@ -169,8 +169,12 @@
 
   function handleMouseMove(e: MouseEvent) {
     const svg = (e.currentTarget as SVGElement).getBoundingClientRect();
-    const relX = e.clientX - svg.left;
-    const relY = e.clientY - svg.top;
+    // Convert from rendered CSS pixels into the SVG viewBox coordinate space
+    // (viewBox is 1000x560 but the element scales to its container width).
+    const scaleX = width / svg.width;
+    const scaleY = height / svg.height;
+    const relX = (e.clientX - svg.left) * scaleX;
+    const relY = (e.clientY - svg.top) * scaleY;
 
     if (relX < margin.left || relX > width - margin.right || relY < margin.top || relY > height - margin.bottom) {
       showCrosshair = false;
