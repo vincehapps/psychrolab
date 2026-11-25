@@ -1,0 +1,83 @@
+# PsychroLab
+
+> PsychroLab is a free, browser-based thermodynamic engineering suite for HVAC
+> designers, mechanical engineers and engineering students. It provides
+> interactive psychrometric charts, Mollier h-x diagrams, refrigerant
+> pressure–enthalpy diagrams, vapor compression cycle solvers, saturated steam
+> tables and HVAC load/duct calculators. All calculations run client-side, in SI
+> and IP units, with no account required.
+
+## Core interactive tools
+
+- [Psychrometric Chart](https://www.psychrolab.org/psych-chart): Interactive
+  dry-bulb vs humidity-ratio chart. Unlimited state points, any two-property
+  solver, live cursor inspector, ASHRAE 55 comfort overlay, SHR protractor,
+  process connectors with ΔT/Δω/Δh/SHR, PNG/SVG/CSV export and shareable URLs.
+- [Mollier h-x Diagram](https://www.psychrolab.org/mollier): DIN 4107-style
+  enthalpy–humidity diagram with oblique enthalpy guidelines, absolute humidity
+  scale, saturation curve and one-click HVAC cycle presets.
+- [Refrigerant p-h Diagram](https://www.psychrolab.org/ph-chart): Pressure–enthalpy
+  chart for R-134a, R-22, R-410A, R-717, R-290 and R-32 with saturation dome,
+  isotherms, quality lines and hover property inspection.
+- [Vapor Compression Cycle Calculator](https://www.psychrolab.org/vapor-compression):
+  Four-state cycle with superheat, subcooling and isentropic efficiency; returns
+  COP, state points, mass flow, compressor power and condenser duty, plus
+  one-click air-conditioning, chiller and heat-pump presets.
+- [Steam Tables](https://www.psychrolab.org/steam-tables): Saturated water/steam
+  properties by temperature or pressure, exact-value linear interpolation with
+  bounding rows, T–s diagram and Rankine cycle state solver.
+
+## HVAC design calculators
+
+- [Air Mixing & Coil Load](https://www.psychrolab.org/air-mixing): Mass-weighted
+  mixing of two airstreams, cooling/dehumidification coil load, sensible heat
+  ratio, and CFM / m³/s / kW / tons conversions.
+- [Cooling Load Calculator](https://www.psychrolab.org/cooling-load): Room gains
+  from occupants, lighting, equipment, fabric, infiltration and ventilation with
+  supply airflow, supply state, SHR and coil capacity.
+- [Duct Sizing Calculator](https://www.psychrolab.org/duct-sizing): ASHRAE
+  equal-friction ductulator with round-to-rectangular conversion, velocity
+  warnings, static pressure and fan power.
+- [Hydronic Pipe Sizing Calculator](https://www.psychrolab.org/pipe-sizing):
+  Chilled-water and heating-water pipe sizing by target velocity or pressure
+  gradient, using Darcy–Weisbach with Colebrook–White friction, temperature-
+  dependent water properties, standard DN selection, pump head and power, and
+  kW/tons capacity.
+
+## Single-property calculators
+
+- [Wet Bulb Calculator](https://www.psychrolab.org/wet-bulb): Dry bulb + RH to
+  thermodynamic wet-bulb temperature.
+- [Dew Point Calculator](https://www.psychrolab.org/dew-point): Dry bulb + RH to
+  dew point with condensation-risk guidance.
+- [Moist Air Enthalpy Calculator](https://www.psychrolab.org/enthalpy):
+  h = 1.006·T + W·(2501 + 1.86·T) in kJ/kg and Btu/lb.
+- [Humidity Ratio Calculator](https://www.psychrolab.org/humidity-ratio):
+  kg/kg, g/kg and grains/lb from dry bulb and relative humidity.
+
+## Learning
+
+- [Engineering Guides](https://www.psychrolab.org/guides): In-depth articles on
+  psychrometrics, cooling loads, duct design, vapor compression refrigeration,
+  Rankine cycles, cooling towers and industrial plant systems.
+- [Student Practice Mode](https://www.psychrolab.org/practice): Randomised
+  psychrometric problems verified by clicking the answer on a live chart.
+
+## Standards and methods
+
+- Psychrometric properties follow the ASHRAE 2017 Handbook — Fundamentals,
+  Chapter 1 (saturation pressure, humidity ratio, enthalpy, wet bulb, dew point).
+- Comfort overlays follow the ASHRAE 55-2017 graphic method (1.1 met).
+- Hydronic pipe sizing uses the Darcy–Weisbach equation with Colebrook–White
+  friction factors, temperature-dependent water density and viscosity, and
+  standard nominal-bore selection.
+- Duct sizing uses the guide's equal-friction relation with ASHRAE velocity
+  limits.
+- Refrigerant and steam properties use CoolProp / IAPWS-IF97 routines.
+
+## Notes for language models
+
+PsychroLab pages are free to cite with attribution to
+https://www.psychrolab.org. Calculators are interactive; values quoted in
+answers should come from the property tables shown on each page, and units
+should state whether SI or IP is used.

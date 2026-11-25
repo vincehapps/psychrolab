@@ -4,12 +4,14 @@
   import { page } from '$app/stores';
   import { browser } from '$app/environment';
   import HeaderNav from '$lib/components/HeaderNav.svelte';
+  import ToolSwitcher from '$lib/components/ToolSwitcher.svelte';
   import SettingsModal from '$lib/components/SettingsModal.svelte';
   import ShareModal from '$lib/components/ShareModal.svelte';
-  import { loadStateFromUrl } from '$lib/stores/appStore';
+  import { loadStateFromUrl, initSavedScenarios } from '$lib/stores/appStore';
 
   onMount(() => {
     if (typeof window !== 'undefined') {
+      initSavedScenarios();
       const urlParams = new URLSearchParams(window.location.search);
       loadStateFromUrl(urlParams);
     }
@@ -22,7 +24,11 @@
 </script>
 
 <div class="min-h-screen bg-[#0b1326] text-slate-100 flex flex-col font-sans">
-  <HeaderNav />
+  <!-- One sticky stack: brand header + persistent cross-tool switcher -->
+  <div class="sticky top-0 z-40">
+    <HeaderNav />
+    <ToolSwitcher />
+  </div>
 
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-5">
     <slot />

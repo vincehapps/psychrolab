@@ -23,6 +23,45 @@
 	let engineReady = false;
 	let engineError = '';
 
+	// One-click cycle presets: common design points, not substitutes for a real selection.
+	const CYCLE_PRESETS = [
+		{
+			id: 'residential-ac',
+			label: 'R-410A residential AC',
+			hint: 'Te 5 °C · Tc 45 °C · 5 K SH/SC · 75% isentropic',
+			values: { refrigerant: 'R410A' as RefrigerantId, teC: 5, tcC: 45, subcoolK: 5, superheatK: 5, isenEff: 75 }
+		},
+		{
+			id: 'chiller',
+			label: 'R-134a chiller',
+			hint: 'Te 2 °C · Tc 40 °C · 4 K SC · 80% isentropic',
+			values: { refrigerant: 'R134a' as RefrigerantId, teC: 2, tcC: 40, subcoolK: 4, superheatK: 4, isenEff: 80 }
+		},
+		{
+			id: 'heat-pump',
+			label: 'R-290 heat pump',
+			hint: 'Te −5 °C · Tc 55 °C · high superheat · 70% isentropic',
+			values: { refrigerant: 'R290' as RefrigerantId, teC: -5, tcC: 55, subcoolK: 5, superheatK: 8, isenEff: 70 }
+		},
+		{
+			id: 'industrial',
+			label: 'R-717 industrial',
+			hint: 'Te −15 °C · Tc 35 °C · ammonia plant · 80% isentropic',
+			values: { refrigerant: 'R717' as RefrigerantId, teC: -15, tcC: 35, subcoolK: 3, superheatK: 5, isenEff: 80 }
+		}
+	];
+
+	let presetId = '';
+	function applyCyclePreset(preset: (typeof CYCLE_PRESETS)[number]) {
+		refrigerant = preset.values.refrigerant;
+		teC = preset.values.teC;
+		tcC = preset.values.tcC;
+		subcoolK = preset.values.subcoolK;
+		superheatK = preset.values.superheatK;
+		isenEff = preset.values.isenEff;
+		presetId = preset.id;
+	}
+
 	onMount(() => {
 		ensureRefrigerantReady()
 			.then(() => (engineReady = true))
@@ -132,6 +171,26 @@
 		<div class="flex items-center space-x-2 mb-4">
 			<Calculator class="w-4 h-4 text-blue-400" />
 			<h2 class="text-sm font-bold text-white uppercase tracking-wider">Cycle Parameters</h2>
+		</div>
+
+		<!-- One-click thermodynamic cycle presets -->
+		<div class="mb-4 space-y-2">
+			<p class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Cycle presets</p>
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+				{#each CYCLE_PRESETS as preset (preset.id)}
+					<button
+						type="button"
+						on:click={() => applyCyclePreset(preset)}
+						aria-pressed={presetId === preset.id}
+						class="text-left rounded-xl border p-2.5 transition-colors {presetId === preset.id
+							? 'border-blue-500/60 bg-blue-600/15'
+							: 'border-slate-800 bg-slate-950/50 hover:border-blue-500/40'}"
+					>
+						<span class="block text-xs font-semibold text-slate-200">{preset.label}</span>
+						<span class="block text-[10px] font-mono text-slate-500 mt-0.5">{preset.hint}</span>
+					</button>
+				{/each}
+			</div>
 		</div>
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

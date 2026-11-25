@@ -13,7 +13,7 @@
   $: isMollierPage = $page.url.pathname === '/mollier';
 </script>
 
-<header class="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80 px-4 py-3">
+<header class="relative z-40 w-full glass-panel border-b border-slate-800/80 px-4 py-3">
   <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
 
     <!-- Logo & Main Page Navigation Links -->

@@ -206,3 +206,6 @@ export function generateSaturationTableByPressure(): SaturationPointSI[] {
     return getSaturatedPropertiesSI(t);
   });
 }
+
+// Rows highlighted by the exact-value interpolator (matched on saturation T)
+export const steamHighlightStore = writable<number[]>([]);
