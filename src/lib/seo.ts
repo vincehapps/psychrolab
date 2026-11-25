@@ -53,7 +53,7 @@ export const SEO: Record<string, SeoEntry> = {
     path: '/steam-tables',
     title: 'Saturated Steam Tables + Interpolator & T-s Diagram | PsychroLab',
     description:
-      'Saturated water and steam property tables by temperature or pressure with an exact-value linear interpolation calculator, bounding-row highlighting, T-s diagram and Rankine cycle state solver.'
+      'Saturated water and steam property tables by temperature or pressure with an exact-value linear interpolation calculator, bounding-row highlighting, a T-s diagram and one-click Rankine cycle presets with a full state-point solver.'
   },
   'vapor-compression': {
     path: '/vapor-compression',

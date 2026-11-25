@@ -4,6 +4,7 @@
   import SteamCycleSummary from '$lib/components/SteamCycleSummary.svelte';
   import SteamTableGrid from '$lib/components/SteamTableGrid.svelte';
   import SteamInterpolator from '$lib/components/SteamInterpolator.svelte';
+  import RankinePresets from '$lib/components/RankinePresets.svelte';
   import Seo from '$lib/components/Seo.svelte';
 </script>
 
@@ -21,6 +22,9 @@
 
   <!-- Interactive T–s Steam Diagram (Saturation Dome, Isobars, Quality Lines, State Points) -->
   <SteamChart />
+
+  <!-- One-click Rankine cycles: four state points each, plotted on the T–s chart -->
+  <RankinePresets />
 
   <!-- Multi-State Steam Point Solver Inputs (drives chart markers) -->
   <SteamStateInputs />

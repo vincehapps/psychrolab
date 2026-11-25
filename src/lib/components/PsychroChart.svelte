@@ -4,7 +4,7 @@
   import { cToF, fToC, getStandardAtmosphericPressureSI, psiTokPa, feetToMeters } from '../psychrometrics/unitConverter';
   import { scaleLinear } from 'd3-scale';
   import { Eye, Crosshair, Sparkles, Download, Copy, Check } from '@lucide/svelte';
-  import { ASHRAE55_ZONES, ASHRAE55_NOTE } from '../psychrometrics/comfort';
+  import { ASHRAE55_ZONES, ASHRAE55_NOTE, pmv, ppd } from '../psychrometrics/comfort';
   import { sensibleHeatRatio } from '../psychrometrics/process';
   import { downloadChartPng, downloadChartSvg, copyTableTsv, downloadTableCsv } from '../chartExport';
 
@@ -388,6 +388,18 @@
   let selectedPointId: string = $pointsInputStore[0]?.id ?? 'P1';
   let copyState: 'idle' | 'done' | 'failed' = 'idle';
 
+  // Live PMV / PPD for the selected point under the summer (0.5 clo) office case.
+  $: comfortPoint = $computedPointsStore.find((p) => p.id === selectedPointId) ?? null;
+  $: comfortPmv =
+    comfortPoint === null
+      ? null
+      : pmv({
+          ta: isSI ? comfortPoint.dbt : fToC(comfortPoint.dbt),
+          rh: comfortPoint.rh,
+          clo: 0.5,
+          met: 1.1
+        });
+
   $: if ($pointsInputStore.length && !$pointsInputStore.some((p) => p.id === selectedPointId)) {
     selectedPointId = $pointsInputStore[0].id;
   }
@@ -403,6 +415,8 @@
       key: z.key,
       label: z.label,
       color: z.color,
+      pmvMin: z.pmvMin,
+      pmvMax: z.pmvMax,
       x: xScale(t0),
       y: yTop,
       width: Math.max(0, xScale(t1) - xScale(t0)),
@@ -602,6 +616,14 @@
     >
       ASHRAE 55 comfort
     </button>
+    {#if showComfort && comfortPmv !== null}
+      <span
+        class="px-2 py-1 rounded-md border border-slate-800 bg-slate-900/70 text-slate-400"
+        title="Predicted Mean Vote and Predicted Percentage Dissatisfied for the selected point (0.5 clo, 1.1 met, 0.1 m/s)"
+      >
+        PMV {comfortPmv.toFixed(2)} · PPD {ppd(comfortPmv).toFixed(0)}%
+      </span>
+    {/if}
     <button
       type="button"
       on:click={() => (showShr = !showShr)}
@@ -725,7 +747,11 @@
               stroke-opacity="0.45"
               stroke-width="1"
               stroke-dasharray="4 3"
-            />
+            >
+              <title>
+                {zone.label} — PMV {zone.pmvMin.toFixed(1)} to {zone.pmvMax.toFixed(1)} at 50% RH
+              </title>
+            </rect>
           {/each}
         {/if}
 
