@@ -4,6 +4,8 @@
  * Covers Subcooled Liquid, Saturated Mixture (dome), and Superheated Vapor
  */
 
+import { region1, region2 } from './iapws';
+
 export type SteamRegion = 'Subcooled' | 'Saturated' | 'Superheated' | 'Supercritical';
 
 export interface SaturationPointSI {
@@ -112,29 +114,40 @@ export function getSaturatedPropertiesSI(tC: number): SaturationPointSI {
   const safeT = Math.max(0.01, Math.min(CRITICAL_T_C - 0.001, tC));
   const pBar = getSatPressureBar(safeT);
   const pPa = pBar * 1e5;
-  const Tk = safeT + 273.15;
-  const theta = Tk / 647.096;
-  const tau = 1 - theta;
+  let hf: number;
+  let hg: number;
+  let sf: number;
+  let sg: number;
+  let vf: number;
+  let vg: number;
 
-  // Liquid Enthalpy hf (kJ/kg)
-  const hf = 4.184 * safeT * (1 - 0.00028 * safeT);
-  // Heat of vaporization hfg (kJ/kg) (Watson correlation)
-  const hfg = 2501.0 * Math.pow(tau / (1 - 273.16 / 647.096), 0.38) * (1 - 0.08 * tau);
-  const hg = hf + hfg;
+  if (safeT <= 350) {
+    // IF97 regions 1 and 2 are valid up to 350 °C of saturation temperature.
+    const pMPa = pBar / 10;
+    const TK = safeT + 273.15;
+    const liquid = region1(pMPa, TK);
+    const vapor = region2(pMPa, TK);
+    hf = liquid.h;
+    hg = vapor.h;
+    sf = liquid.s;
+    sg = vapor.s;
+    vf = liquid.v;
+    vg = vapor.v;
+  } else {
+    // Above 350 °C the saturated line enters region 3, which is not implemented
+    // here; bridge linearly to the critical point so the table stays monotone.
+    const anchor = getSaturatedPropertiesSI(350);
+    const a = (safeT - 350) / (CRITICAL_T_C - 350);
+    hf = anchor.hf + (CRITICAL_H - anchor.hf) * a;
+    hg = anchor.hg + (CRITICAL_H - anchor.hg) * a;
+    sf = anchor.sf + (CRITICAL_S - anchor.sf) * a;
+    sg = anchor.sg + (CRITICAL_S - anchor.sg) * a;
+    vf = anchor.vf + (CRITICAL_V - anchor.vf) * a;
+    vg = anchor.vg + (CRITICAL_V - anchor.vg) * a;
+  }
 
-  // Liquid Entropy sf (kJ/kg*K)
-  const sf = 4.184 * Math.log(Tk / 273.16) * (1 - 0.00015 * safeT);
-  const sfg = hfg / Tk;
-  const sg = sf + sfg;
-
-  // Liquid Specific Volume vf (m3/kg)
-  const vf = 0.001 * (1 + 0.00006 * safeT + 0.000004 * safeT * safeT);
-  // Ideal/Real vapor specific volume vg (m3/kg)
-  const R_steam = 0.4615; // kJ/(kg*K)
-  const Z = Math.max(0.65, 1 - 0.0018 * pBar);
-  const vg = (Z * R_steam * Tk) / (pBar * 100);
-
-  // Internal energy
+  const hfg = hg - hf;
+  const sfg = sg - sf;
   const uf = hf - (pPa * vf) / 1000;
   const ug = hg - (pPa * vg) / 1000;
 
@@ -160,18 +173,7 @@ export function getSaturatedPropertiesSI(tC: number): SaturationPointSI {
 export function getSuperheatedPropertiesSI(pBar: number, tC: number) {
   const tsat = getSatTemperatureC(pBar);
   const safeT = Math.max(tsat, tC);
-  const sat = getSaturatedPropertiesSI(tsat);
-  const dT = safeT - tsat;
-
-  const cp = 1.9 + 0.001 * safeT + 0.008 * (pBar / (safeT + 1));
-  const h = sat.hg + cp * dT;
-  const s = sat.sg + cp * Math.log((safeT + 273.15) / (tsat + 273.15));
-
-  const R_steam = 0.4615;
-  const Tk = safeT + 273.15;
-  const Z = Math.max(0.7, 1 - 0.0015 * (pBar / (safeT / 100)));
-  const v = (Z * R_steam * Tk) / (pBar * 100);
-  const u = h - (pBar * 1e5 * v) / 1000;
+  const { v, h, s, u } = region2(pBar / 10, safeT + 273.15);
 
   return {
     pBar,
@@ -181,6 +183,26 @@ export function getSuperheatedPropertiesSI(pBar: number, tC: number) {
     s: Number(s.toFixed(4)),
     u: Number(u.toFixed(2))
   };
+}
+
+/** Bisection on temperature for a target enthalpy at fixed pressure. */
+function invertTemperature(
+  pMPa: number,
+  targetH: number,
+  tMinC: number,
+  tMaxC: number,
+  props: (pMPa: number, TK: number) => { h: number }
+): number {
+  let lo = tMinC;
+  let hi = tMaxC;
+  let mid = lo;
+  for (let i = 0; i < 100; i++) {
+    mid = (lo + hi) / 2;
+    const h = props(pMPa, mid + 273.15).h;
+    if (h < targetH) lo = mid;
+    else hi = mid;
+  }
+  return Number(mid.toFixed(3));
 }
 
 /**
@@ -220,8 +242,9 @@ export function solveSteamStatePointSI(
       const superPt = getSuperheatedPropertiesSI(pBar, tC);
       return { region: 'Superheated', pBar, tC, x: -1, v: superPt.v, h: superPt.h, s: superPt.s, u: superPt.u };
     } else if (tC < tsat - 0.1) {
-      const sat = getSaturatedPropertiesSI(tC);
-      return { region: 'Subcooled', pBar, tC, x: -1, v: sat.vf, h: sat.hf, s: sat.sf, u: sat.uf };
+      // Compressed liquid at the actual pressure, not saturated liquid at tC.
+      const liq = region1(pBar / 10, tC + 273.15);
+      return { region: 'Subcooled', pBar, tC, x: -1, v: liq.v, h: liq.h, s: liq.s, u: liq.u };
     } else {
       const sat = getSaturatedPropertiesSI(tsat);
       return { region: 'Saturated', pBar, tC: tsat, x: 1.0, v: sat.vg, h: sat.hg, s: sat.sg, u: sat.ug };
@@ -269,10 +292,14 @@ export function solveSteamStatePointSI(
     const sat = getSaturatedPropertiesSI(tsat);
 
     if (hVal < sat.hf) {
-      return { region: 'Subcooled', pBar, tC: tsat - (sat.hf - hVal) / 4.184, x: -1, v: sat.vf, h: hVal, s: sat.sf, u: sat.uf };
+      // Invert region 1 in temperature; h is monotonic in T at fixed p.
+      const tC = invertTemperature(pBar / 10, hVal, 0.01, tsat, region1);
+      const liq = region1(pBar / 10, tC + 273.15);
+      return { region: 'Subcooled', pBar, tC, x: -1, v: liq.v, h: hVal, s: liq.s, u: liq.u };
     } else if (hVal > sat.hg) {
-      const sup = getSuperheatedPropertiesSI(pBar, tsat + (hVal - sat.hg) / 2.1);
-      return { region: 'Superheated', pBar, tC: sup.tC, x: -1, v: sup.v, h: hVal, s: sup.s, u: sup.u };
+      const tC = invertTemperature(pBar / 10, hVal, tsat, 800, region2);
+      const sup = region2(pBar / 10, tC + 273.15);
+      return { region: 'Superheated', pBar, tC, x: -1, v: sup.v, h: hVal, s: sup.s, u: sup.u };
     } else {
       const quality = Math.max(0, Math.min(1, (hVal - sat.hf) / sat.hfg));
       const s = sat.sf + quality * sat.sfg;

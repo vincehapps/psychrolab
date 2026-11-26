@@ -1,6 +1,8 @@
 import { writable, derived } from 'svelte/store';
 import type { SystemSettings, StatePointInput, StatePointCalculated, UnitSystem, PropertyType } from '../psychrometrics/types';
 import { evaluateStatePoint, calculateDelta } from '../psychrometrics/engine';
+import { cToF } from '../psychrometrics/unitConverter';
+import { trackEvent } from '../analytics';
 
 export type ChartView = 'psychrometric' | 'mollier';
 
@@ -122,14 +124,14 @@ export interface SharePayload {
   }[];
 }
 
-// Generate shareable URL with encoded state points and settings
-export function generateShareUrl(currentPath?: string): string {
+// Snapshot the current state points + settings for sharing or saving
+export function buildSharePayload(): SharePayload {
   let settings: SystemSettings = { unitSystem: 'SI', elevation: 0, pressure: 101.325 };
   let points: StatePointInput[] = [];
   settingsStore.subscribe((s) => (settings = s))();
   pointsInputStore.subscribe((p) => (points = p))();
 
-  const payload: SharePayload = {
+  return {
     u: settings.unitSystem,
     elev: settings.elevation,
     press: settings.pressure,
@@ -142,14 +144,24 @@ export function generateShareUrl(currentPath?: string): string {
       v2: p.val2
     }))
   };
+}
 
+// Base64 encode a share payload (UTF-8 safe)
+export function encodeSharePayload(payload: SharePayload): string {
   const jsonStr = JSON.stringify(payload);
-  const base64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode(parseInt(p1, 16))));
-  const encoded = encodeURIComponent(base64);
+  const base64 = btoa(
+    encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode(parseInt(p1, 16)))
+  );
+  return encodeURIComponent(base64);
+}
+
+// Generate shareable URL with encoded state points and settings
+export function generateShareUrl(currentPath?: string): string {
+  const encoded = encodeSharePayload(buildSharePayload());
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const path = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '/psych-chart');
-  return `${origin}${path}?share=${encoded}`;
+  return `${origin}${path}?share=${encoded}&src=share`;
 }
 
 // Function to copy share URL to clipboard and show the share modal
@@ -160,13 +172,21 @@ export function triggerShare(currentPath?: string): string {
   }
   sharedUrlStore.set(url);
   showShareModal.set(true);
+  trackEvent('share_link_copied', {
+    path: currentPath || (typeof window !== 'undefined' ? window.location.pathname : '/psych-chart')
+  });
   return url;
 }
+
+// Guards against the two call sites (onMount + reactive $page) double-loading
+export let lastLoadedShare: string | null = null;
 
 // Function to load state points and parameters from URL query params
 export function loadStateFromUrl(searchParams: URLSearchParams): boolean {
   const shareParam = searchParams.get('share');
   if (!shareParam) return false;
+  if (lastLoadedShare === shareParam) return false;
+  lastLoadedShare = shareParam;
 
   try {
     const rawBase64 = decodeURIComponent(shareParam);
@@ -198,6 +218,11 @@ export function loadStateFromUrl(searchParams: URLSearchParams): boolean {
         val2: Number(p.v2)
       }));
       pointsInputStore.set(loadedPoints);
+      trackEvent('shared_state_loaded', { points: loadedPoints.length, unit: data.u ?? 'SI' });
+      // Strip the share payload from the address bar, keeping the path clean.
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+      }
       return true;
     }
   } catch (e) {
@@ -290,3 +315,152 @@ export function setUnitSystem(unitSystem: UnitSystem) {
   });
 }
 
+
+// ---------------------------------------------------------------------------
+// Saved scenarios — named multi-point states in localStorage (no accounts)
+// ---------------------------------------------------------------------------
+
+export interface SavedScenario {
+  id: string;
+  name: string;
+  createdAt: number;
+  payload: SharePayload;
+}
+
+const SCENARIO_KEY = 'psychrolab:scenarios:v1';
+
+export const savedScenariosStore = writable<SavedScenario[]>([]);
+
+function readScenarios(): SavedScenario[] {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(SCENARIO_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as SavedScenario[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistScenarios(list: SavedScenario[]) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(SCENARIO_KEY, JSON.stringify(list));
+  } catch {
+    // storage full or blocked — scenarios stay in memory for this session
+  }
+}
+
+export function initSavedScenarios() {
+  savedScenariosStore.set(readScenarios());
+}
+
+/** Save the current chart state under a user-supplied name. */
+export function saveScenario(name: string): boolean {
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  const scenario: SavedScenario = {
+    id: `s_${Date.now().toString(36)}`,
+    name: trimmed.slice(0, 60),
+    createdAt: Date.now(),
+    payload: buildSharePayload()
+  };
+  let next: SavedScenario[] = [];
+  savedScenariosStore.update((list) => {
+    next = [scenario, ...list].slice(0, 25);
+    return next;
+  });
+  persistScenarios(next);
+  trackEvent('scenario_saved', { name: scenario.name });
+  return true;
+}
+
+/** Reload a saved scenario into the live chart. */
+export function applyScenario(id: string): boolean {
+  let list: SavedScenario[] = [];
+  savedScenariosStore.subscribe((v) => (list = v))();
+  const scenario = list.find((s) => s.id === id);
+  if (!scenario) return false;
+
+  lastLoadedShare = null;
+  const params = new URLSearchParams({ share: encodeSharePayload(scenario.payload) });
+  const ok = loadStateFromUrl(params);
+  if (ok) trackEvent('scenario_loaded', { name: scenario.name });
+  return ok;
+}
+
+export function deleteScenario(id: string) {
+  let next: SavedScenario[] = [];
+  savedScenariosStore.update((list) => {
+    next = list.filter((s) => s.id !== id);
+    return next;
+  });
+  persistScenarios(next);
+}
+
+// ---------------------------------------------------------------------------
+// Preset / bridge helpers
+// ---------------------------------------------------------------------------
+
+export interface PresetPoint {
+  dbt: number; // °C (SI canonical)
+  rh: number; // %
+  name?: string;
+}
+
+/**
+ * Replace the chart's points with a named process preset. Presets are defined
+ * in SI and converted to the active display units.
+ */
+export function applyPointPreset(points: PresetPoint[]) {
+  let isSI = true;
+  settingsStore.subscribe((s) => (isSI = s.unitSystem === 'SI'))();
+
+  const next: StatePointInput[] = points.map((p, idx) => ({
+    id: `P${idx + 1}`,
+    name: p.name ?? `State ${idx + 1}`,
+    color: getPrimaryShadeColor(idx),
+    enabled: true,
+    type1: 'DBT',
+    val1: isSI ? Number(p.dbt.toFixed(1)) : Number(cToF(p.dbt).toFixed(1)),
+    type2: 'RH',
+    val2: Number(p.rh.toFixed(1))
+  }));
+
+  pointsInputStore.set(next);
+  trackEvent('preset_applied', { points: next.length });
+}
+
+/**
+ * Bridge a saturated-steam state onto the moist-air chart: the saturation
+ * temperature becomes the dry-bulb temperature and the humidity ratio is the
+ * value at 100% RH for the current barometric pressure.
+ */
+export function setSaturationPoint(tC: number, wSI: number, name = 'Steam saturation state') {
+  let isSI = true;
+  settingsStore.subscribe((s) => (isSI = s.unitSystem === 'SI'))();
+
+  pointsInputStore.update((points) => {
+    const base: StatePointInput = points[0] ?? {
+      id: 'P1',
+      name,
+      color: getPrimaryShadeColor(0),
+      enabled: true,
+      type1: 'DBT',
+      val1: 20,
+      type2: 'RH',
+      val2: 50
+    };
+    const updated: StatePointInput = {
+      ...base,
+      name,
+      enabled: true,
+      type1: 'DBT',
+      val1: isSI ? Number(tC.toFixed(2)) : Number(cToF(tC).toFixed(2)),
+      type2: 'HUMRAT',
+      val2: isSI ? Number(wSI.toFixed(5)) : Number((wSI * 7000).toFixed(1))
+    };
+    return [updated, ...points.slice(1)];
+  });
+}

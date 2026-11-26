@@ -7,7 +7,9 @@ const config = {
 	preprocess: [vitePreprocess(), mdsvex({ extensions: ['.md'] })],
 	extensions: ['.svelte', '.md'],
 	kit: {
-		adapter: adapter()
+		// Pin the runtime: the adapter otherwise infers it from the local Node version
+		// and refuses to build on anything newer than the Node majors it supports.
+		adapter: adapter({ runtime: 'nodejs22.x' })
 	}
 };
 

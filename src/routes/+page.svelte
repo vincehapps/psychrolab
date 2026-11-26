@@ -1,12 +1,20 @@
 <script lang="ts">
-  import { LineChart, Compass, Sliders, ArrowRight, Activity, Zap, CheckCircle2, ShieldCheck, Download, Layers, Flame, Droplets, Mountain, BookOpen } from '@lucide/svelte';
+  import { LineChart, Compass, Sliders, ArrowRight, Activity, Zap, CheckCircle2, ShieldCheck, Download, Layers, Flame, Droplets, Mountain, BookOpen, Thermometer, Snowflake, Wind } from '@lucide/svelte';
   import { setUnitSystem, settingsStore } from '$lib/stores/appStore';
+  import PsychroChart from '$lib/components/PsychroChart.svelte';
+  import Seo from '$lib/components/Seo.svelte';
+
+  const quickLaunch = [
+    { href: '/psych-chart', label: 'Psychrometric Chart', icon: LineChart, accent: 'text-blue-400' },
+    { href: '/mollier', label: 'Mollier Diagram', icon: Compass, accent: 'text-emerald-400' },
+    { href: '/vapor-compression', label: 'Vapor Compression', icon: Snowflake, accent: 'text-cyan-400' },
+    { href: '/steam-tables', label: 'Steam Tables', icon: Thermometer, accent: 'text-amber-400' },
+    { href: '/air-mixing', label: 'Air Mixing & Coil', icon: Layers, accent: 'text-indigo-400' },
+    { href: '/duct-sizing', label: 'Duct Sizing', icon: Wind, accent: 'text-teal-400' }
+  ];
 </script>
 
-<svelte:head>
-  <title>PsychroLab — Precision Thermodynamic & Psychrometric Engineering Suite</title>
-  <meta name="description" content="Professional thermodynamic suite for HVAC designers and mechanical engineers. Interactive Psychrometric charts, Mollier diagrams, multi-state AHU coil analysis, and ASHRAE 2017 compliant calculations." />
-</svelte:head>
+<Seo route="home" />
 
 <div class="space-y-16 py-4">
 
@@ -57,6 +65,21 @@
         </a>
       </div>
 
+      <!-- Instant-launch tool cards, above the fold -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-2">
+        {#each quickLaunch as tool}
+          <a
+            href={tool.href}
+            class="group flex flex-col items-center gap-1.5 rounded-xl border border-slate-800/90 bg-slate-950/50 hover:border-blue-500/50 hover:bg-slate-900/70 px-2 py-3 transition-colors"
+          >
+            <svelte:component this={tool.icon} class="w-4 h-4 {tool.accent}" />
+            <span class="text-[10px] sm:text-[11px] font-semibold text-slate-300 group-hover:text-white text-center leading-tight">
+              {tool.label}
+            </span>
+          </a>
+        {/each}
+      </div>
+
       <!-- Feature Badges Row -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-slate-800/80 text-left">
         <div class="flex items-center space-x-2 text-xs text-slate-300 font-mono">
@@ -78,6 +101,24 @@
       </div>
 
     </div>
+  </section>
+
+  <!-- ================= LIVE CHART EMBED ================= -->
+  <section class="space-y-3">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Live psychrometric chart — no signup</h2>
+        <p class="text-xs text-slate-400">
+          Drag any state point, hover for instant properties, or load a preset. Then switch to Mollier, the
+          refrigerant p–h chart or steam tables from the tool bar above.
+        </p>
+      </div>
+      <a href="/psych-chart" class="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 shrink-0">
+        <span>Open the full workspace</span>
+        <ArrowRight class="w-3.5 h-3.5" />
+      </a>
+    </div>
+    <PsychroChart />
   </section>
 
   <!-- ================= CORE TOOLS & MODULES ================= -->

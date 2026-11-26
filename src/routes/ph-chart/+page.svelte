@@ -1,11 +1,50 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { ArrowLeft, ArrowRight } from '@lucide/svelte';
 	import PhChart from '$lib/components/PhChart.svelte';
-	import { REFRIGERANTS, type RefrigerantId } from '$lib/refrig/engine';
+	import { REFRIGERANTS, ensureRefrigerantReady, type RefrigerantId } from '$lib/refrig/engine';
+	import { computeCycle, type CycleResult } from '$lib/refrig/cycle';
 
 	const SITE_URL = 'https://www.psychrolab.org';
 
 	let refrigerant: RefrigerantId = 'R134a';
+
+	// One-click cycle overlays on the p–h diagram
+	const CYCLE_OVERLAYS = [
+		{ id: 'ac', label: 'R-410A AC', hint: '5 / 45 °C', refrigerant: 'R410A' as RefrigerantId, teC: 5, tcC: 45 },
+		{ id: 'chiller', label: 'R-134a chiller', hint: '2 / 40 °C', refrigerant: 'R134a' as RefrigerantId, teC: 2, tcC: 40 },
+		{ id: 'heatpump', label: 'R-290 heat pump', hint: '−5 / 55 °C', refrigerant: 'R290' as RefrigerantId, teC: -5, tcC: 55 },
+		{ id: 'industrial', label: 'R-717 industrial', hint: '−15 / 35 °C', refrigerant: 'R717' as RefrigerantId, teC: -15, tcC: 35 }
+	];
+
+	let ready = false;
+	let overlayId = '';
+	let overlayCycle: CycleResult | null = null;
+
+	onMount(() => {
+		ensureRefrigerantReady().then(() => (ready = true));
+	});
+
+	function applyOverlay(preset: (typeof CYCLE_OVERLAYS)[number]) {
+		refrigerant = preset.refrigerant;
+		overlayId = preset.id;
+		overlayCycle = ready
+			? computeCycle({
+					refrigerant: preset.refrigerant,
+					teC: preset.teC,
+					tcC: preset.tcC,
+					subcoolK: 5,
+					superheatK: 5,
+					isenEff: 0.8,
+					capacityKW: 10
+				})
+			: null;
+	}
+
+	function clearOverlay() {
+		overlayId = '';
+		overlayCycle = null;
+	}
 
 	const faqs = [
 		{
@@ -79,6 +118,33 @@
 		</p>
 	</div>
 
+	<!-- One-click thermodynamic cycle overlays -->
+	<div class="glass-panel rounded-2xl border border-slate-800 p-4 space-y-2">
+		<div class="flex items-center justify-between gap-2">
+			<p class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Cycle presets (p–h overlay)</p>
+			{#if overlayId}
+				<button type="button" on:click={clearOverlay} class="text-[10px] font-mono text-slate-400 hover:text-white">
+					Clear overlay
+				</button>
+			{/if}
+		</div>
+		<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+			{#each CYCLE_OVERLAYS as preset (preset.id)}
+				<button
+					type="button"
+					on:click={() => applyOverlay(preset)}
+					aria-pressed={overlayId === preset.id}
+					class="text-left rounded-xl border p-2.5 transition-colors {overlayId === preset.id
+						? 'border-blue-500/60 bg-blue-600/15'
+						: 'border-slate-800 bg-slate-950/50 hover:border-blue-500/40'}"
+				>
+					<span class="block text-xs font-semibold text-slate-200">{preset.label}</span>
+					<span class="block text-[10px] font-mono text-slate-500 mt-0.5">{preset.hint}</span>
+				</button>
+			{/each}
+		</div>
+	</div>
+
 	<!-- Refrigerant selector -->
 	<div class="glass-panel rounded-2xl border border-slate-800 p-4">
 		<div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Select refrigerant">
@@ -103,7 +169,7 @@
 	</div>
 
 	<!-- Chart -->
-	<PhChart {refrigerant} />
+	<PhChart {refrigerant} cycle={overlayCycle} />
 
 	<!-- CTA to calculator -->
 	<div class="glass-panel rounded-2xl border border-slate-800 p-5 flex flex-col sm:flex-row items-center justify-between gap-3">

@@ -1,6 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { generateSaturationTableByTemperature, generateSaturationTableByPressure } from '../steam/steamStore';
+  import {
+    generateSaturationTableByTemperature,
+    generateSaturationTableByPressure,
+    steamHighlightStore
+  } from '../steam/steamStore';
   import { settingsStore } from '../stores/appStore';
   import type { SaturationPointSI } from '../steam/steamEngine';
   import { Table, Search, Download, Filter, Droplets } from '@lucide/svelte';
@@ -147,7 +151,11 @@
           {@const hgDisp = isIP ? (row.hg * 0.4299).toFixed(1) : row.hg.toFixed(1)}
           {@const sfDisp = isIP ? (row.sf * 0.2388).toFixed(4) : row.sf.toFixed(4)}
           {@const sgDisp = isIP ? (row.sg * 0.2388).toFixed(4) : row.sg.toFixed(4)}
-          <tr class="hover:bg-slate-800/40 transition-colors">
+          <tr
+            class="hover:bg-slate-800/40 transition-colors {$steamHighlightStore.includes(row.tC)
+              ? 'bg-emerald-500/10'
+              : ''}"
+          >
             <td class="p-2.5 font-bold text-amber-400">{tDisp}</td>
             <td class="p-2.5 text-cyan-400 font-semibold">{pDisp}</td>
             <td class="p-2.5 text-slate-400">{vfDisp}</td>
