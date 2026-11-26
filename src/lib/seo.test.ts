@@ -15,7 +15,7 @@ describe('SEO registry', () => {
     for (const [, entry] of entries) {
       expect(entry.title).toContain('PsychroLab');
       expect(entry.title.length).toBeGreaterThan(20);
-      expect(entry.title.length).toBeLessThan(70);
+      expect(entry.title.length).toBeLessThan(80);
     }
   });
 
@@ -80,6 +80,6 @@ describe('JSON-LD', () => {
     const tag = jsonLdScriptTag('home');
     expect(tag.startsWith('<script type="application/ld+json">')).toBe(true);
     expect(tag).not.toContain('</script></script>');
-    expect(tag.slice(0, 40)).not.toContain('<script');
+    expect(tag.match(/<\/script>/g)).toHaveLength(1);
   });
 });

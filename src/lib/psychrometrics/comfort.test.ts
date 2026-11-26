@@ -22,10 +22,11 @@ describe('PMV', () => {
     }
   });
 
-  it('is colder when clothing insulation rises', () => {
+  it('votes warmer when clothing insulation rises', () => {
     const light = pmv({ ta: 22, rh: 50, clo: 0.5, met: 1.1 });
     const heavy = pmv({ ta: 22, rh: 50, clo: 1.0, met: 1.1 });
-    expect(heavy).toBeLessThan(light);
+    // More insulation traps heat, so the same room feels warmer.
+    expect(heavy).toBeGreaterThan(light);
   });
 
   it('treats mean radiant temperature as air temperature by default', () => {

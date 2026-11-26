@@ -72,12 +72,16 @@ export const RANKINE_PRESETS: RankinePreset[] = [
     id: 'back-pressure',
     label: 'Back-pressure 20 bar / 3 bar',
     note: 'Industrial CHP cycle exhausting to a 3 bar process main at 95% quality.',
-    points: cycle(20, 350, 3, 0.95, 80)
+    // Feedwater must sit above the 133.5 °C saturation temperature at 3 bar,
+    // otherwise the pump would have to cool the liquid to reach the boiler.
+    points: cycle(20, 350, 3, 0.95, 140)
   },
   {
     id: 'low-temperature',
     label: 'Low temperature 10 bar / 250 °C',
-    note: 'Small low-temperature cycle, 0.15 bar condenser and 45 °C feedwater, for waste-heat and biomass duties.',
-    points: cycle(10, 250, 0.15, 0.9, 45)
+    note: 'Small low-temperature cycle, 0.15 bar condenser and 60 °C feedwater, for waste-heat and biomass duties.',
+    // 0.15 bar saturates at 54 °C, so 60 °C is the coolest feedwater that still
+    // leaves the pump doing positive work.
+    points: cycle(10, 250, 0.15, 0.9, 60)
   }
 ];

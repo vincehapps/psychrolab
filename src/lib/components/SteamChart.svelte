@@ -383,6 +383,8 @@
       id="steam-chart-svg"
       viewBox="0 0 {width} {height}"
       class="w-full h-auto cursor-crosshair"
+      role="img"
+      aria-label="Temperature-entropy diagram with state points and cycle path"
       on:mousemove={handleMouseMove}
       on:mouseleave={handleMouseLeave}
     >
@@ -539,7 +541,16 @@
         {@const py = tToY(pt.tC)}
         <g
           class="cursor-pointer transition-transform hover:scale-125"
+          role="button"
+          tabindex="0"
+          aria-label="Select state point {pt.id}"
           on:click={() => activeSteamPointId.set(pt.id)}
+          on:keydown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              activeSteamPointId.set(pt.id);
+            }
+          }}
         >
           <!-- Outer Pulse Glow -->
           <circle

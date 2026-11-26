@@ -5,10 +5,10 @@ import {
   getHumRatioFromVapPress,
   getSatVaporPressureSI,
   getSpecificVolumeSI,
-  getStandardAtmosphericPressureSI,
   getWetBulbSI,
   solveStatePointFromPairSI
 } from './engine';
+import { getStandardAtmosphericPressureSI } from './unitConverter';
 
 const P = 101325;
 

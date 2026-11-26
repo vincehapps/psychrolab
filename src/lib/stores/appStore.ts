@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import type { SystemSettings, StatePointInput, StatePointCalculated, UnitSystem, PropertyType } from '../psychrometrics/types';
 import { evaluateStatePoint, calculateDelta } from '../psychrometrics/engine';
 import { cToF } from '../psychrometrics/unitConverter';
@@ -274,8 +274,11 @@ export function removePointInput(id: string) {
 
 // Function to toggle unit system and adjust default parameters appropriately
 export function setUnitSystem(unitSystem: UnitSystem) {
-  settingsStore.update((s) => {
-    if (s.unitSystem === unitSystem) return s;
+	// Re-selecting the active unit must not convert the point values again:
+	// the conversion below assumes the inputs are still in the other system.
+	if (get(settingsStore).unitSystem === unitSystem) return;
+
+	settingsStore.update((s) => {
     const isSI = unitSystem === 'SI';
     return {
       unitSystem,
@@ -329,6 +332,9 @@ export interface SavedScenario {
 
 const SCENARIO_KEY = 'psychrolab:scenarios:v1';
 
+/** Disambiguates ids when two scenarios are saved within the same millisecond. */
+let scenarioSeq = 0;
+
 export const savedScenariosStore = writable<SavedScenario[]>([]);
 
 function readScenarios(): SavedScenario[] {
@@ -361,7 +367,7 @@ export function saveScenario(name: string): boolean {
   const trimmed = name.trim();
   if (!trimmed) return false;
   const scenario: SavedScenario = {
-    id: `s_${Date.now().toString(36)}`,
+    id: `s_${Date.now().toString(36)}_${(scenarioSeq++).toString(36)}`,
     name: trimmed.slice(0, 60),
     createdAt: Date.now(),
     payload: buildSharePayload()
