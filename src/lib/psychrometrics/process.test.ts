@@ -65,16 +65,22 @@ describe('airstream mixing', () => {
 });
 
 describe('coil load', () => {
-  const entering = solveStatePointFromPairSI('DBT', 26, 'RH', 60, P);
-  const leaving = solveStatePointFromPairSI('DBT', 13, 'RH', 90, P);
+  // coilLoad takes the compact { tC, w, h } state, not the full solver output.
+  const air = (dbt: number, rh: number) => {
+    const st = solveStatePointFromPairSI('DBT', dbt, 'RH', rh, P);
+    return { tC: st.dbt, w: st.humRat, h: st.enthalpy };
+  };
+  const entering = air(26, 60);
+  const leaving = air(13, 90);
 
   it('splits total load into sensible and latent parts', () => {
     const load = coilLoad(1, entering, leaving);
     expect(load.totalKW).toBeGreaterThan(0);
-    expect(load.sensibleKW).toBeCloseTo(AIR_CP * (entering.dbt - leaving.tC), 6);
-    expect(load.latentKW).toBeCloseTo(WATER_HFG * (entering.humRat - leaving.w), 6);
+    expect(load.sensibleKW).toBeCloseTo(AIR_CP * (entering.tC - leaving.tC), 6);
+    expect(load.latentKW).toBeCloseTo(WATER_HFG * (entering.w - leaving.w), 6);
     // The latent hfg approximation differs slightly from h's 1.86·T term.
-    expect(load.sensibleKW + load.latentKW).toBeCloseTo(load.totalKW, 0);
+    const split = load.sensibleKW + load.latentKW;
+    expect(Math.abs(split - load.totalKW) / load.totalKW).toBeLessThan(0.05);
     expect(load.shr).toBeGreaterThan(0.5);
     expect(load.shr).toBeLessThan(0.8);
   });

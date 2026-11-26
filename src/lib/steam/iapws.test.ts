@@ -29,7 +29,7 @@ describe('IAPWS-IF97 region 1 (compressed liquid)', () => {
     const { v, h, s } = region1(3, 500);
     close(v, 0.120241800e-2);
     close(h, 0.975542239e3);
-    close(s, 1.07478257);
+    close(s, 0.258041912e1);
   });
 });
 
@@ -38,21 +38,21 @@ describe('IAPWS-IF97 region 2 (vapour)', () => {
     const { v, h, s } = region2(0.0035, 300);
     close(v, 0.394913866e2);
     close(h, 0.254991145e4);
-    close(s, 0.852238967);
+    close(s, 0.852238967e1);
   });
 
   it('matches the 700 K / 0.0035 MPa reference point', () => {
     const { v, h, s } = region2(0.0035, 700);
     close(v, 0.923015898e2);
     close(h, 0.333568375e4);
-    close(s, 1.94617551);
+    close(s, 0.101749996e2);
   });
 
   it('matches the 700 K / 30 MPa reference point', () => {
     const { v, h, s } = region2(30, 700);
     close(v, 0.542946619e-2);
     close(h, 0.263149474e4);
-    close(s, 1.94128728);
+    close(s, 0.517540298e1);
   });
 });
 

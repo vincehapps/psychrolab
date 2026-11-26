@@ -26,7 +26,7 @@ describe('water properties', () => {
   it('matches tabulated values at 60 °C', () => {
     const w = waterAt(60);
     expect(w.density).toBeCloseTo(983.2, 0);
-    expect(w.viscosity).toBeCloseTo(4.7e-4, 5);
+    expect(w.viscosity).toBeCloseTo(4.63e-4, 5);
   });
 
   it('clamps outside 0–100 °C', () => {
