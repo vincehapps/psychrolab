@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 import {
   addPointInput,
@@ -29,6 +29,10 @@ beforeEach(() => {
   settingsStore.set(SI);
   pointsInputStore.set(defaultPoints);
   savedScenariosStore.set([]);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('state colours', () => {
@@ -78,8 +82,15 @@ describe('share payloads', () => {
   });
 
   it('leaves the chart untouched when the payload is corrupt', () => {
+    // The parser logs the bad payload through console.error. Capture that so an
+    // expected failure path does not read like a real error in the suite output.
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const before = get(pointsInputStore);
+
     expect(loadStateFromUrl(new URLSearchParams({ share: 'definitely-not-base64!!' }))).toBe(false);
+
+    expect(consoleError).toHaveBeenCalledTimes(1);
+    expect(String(consoleError.mock.calls[0][0])).toContain('Failed to parse share URL payload');
     expect(get(pointsInputStore)).toBe(before);
     expect(get(settingsStore)).toEqual(SI);
   });
