@@ -332,6 +332,9 @@ export interface SavedScenario {
 
 const SCENARIO_KEY = 'psychrolab:scenarios:v1';
 
+/** Disambiguates ids when two scenarios are saved within the same millisecond. */
+let scenarioSeq = 0;
+
 export const savedScenariosStore = writable<SavedScenario[]>([]);
 
 function readScenarios(): SavedScenario[] {
@@ -364,7 +367,7 @@ export function saveScenario(name: string): boolean {
   const trimmed = name.trim();
   if (!trimmed) return false;
   const scenario: SavedScenario = {
-    id: `s_${Date.now().toString(36)}`,
+    id: `s_${Date.now().toString(36)}_${(scenarioSeq++).toString(36)}`,
     name: trimmed.slice(0, 60),
     createdAt: Date.now(),
     payload: buildSharePayload()

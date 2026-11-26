@@ -497,10 +497,11 @@
     return Number(value.toFixed(2));
   }
 
-  function handleChartKeydown(event: KeyboardEvent) {
+  function handleChartKeydown(event: KeyboardEvent, id: string = selectedPointId) {
     if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
-    const pt = $pointsInputStore.find((p) => p.id === selectedPointId);
+    const pt = $pointsInputStore.find((p) => p.id === id);
     if (!pt) return;
+    selectedPointId = id;
     event.preventDefault();
     const dir = event.key === 'ArrowUp' || event.key === 'ArrowRight' ? 1 : -1;
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
@@ -508,6 +509,20 @@
     } else {
       updatePointInput(pt.id, { val2: roundFor(pt.type2, pt.val2 + dir * stepFor(pt.type2)) });
     }
+  }
+
+  /**
+   * The state points are the chart's keyboard controls: Enter selects a point,
+   * the arrow keys nudge it. Handling keys on the point itself (rather than on
+   * a non-interactive wrapper) is what keeps the chart operable without a mouse.
+   */
+  function handlePointKeydown(event: KeyboardEvent, id: string) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      selectedPointId = id;
+      return;
+    }
+    handleChartKeydown(event, id);
   }
 
   // ---------------------------------------------------------------------
@@ -566,10 +581,6 @@
 
 <div
   class="relative glass-panel rounded-2xl p-4 border border-slate-800 shadow-xl overflow-hidden"
-  role="application"
-  aria-label="Interactive psychrometric chart"
-  tabindex="0"
-  on:keydown={handleChartKeydown}
 >
 
   <!-- Header bar -->
@@ -932,7 +943,7 @@
           <g
             transform="translate({xScale(pt.dbt)}, {yScale(pt.humRat)})"
             on:click|stopPropagation={() => (selectedPointId = pt.id)}
-            on:keydown={(e) => e.key === 'Enter' && (selectedPointId = pt.id)}
+            on:keydown={(e) => handlePointKeydown(e, pt.id)}
             role="button"
             tabindex="0"
             aria-label="Select state point {pt.id}"

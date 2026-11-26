@@ -77,19 +77,29 @@ describe('psychrometric engine vs PsychroLib (ASHRAE reference)', () => {
     }
   });
 
-  it('uses the water curve below freezing, so wet bulb runs up to ~0.5 K warm', () => {
-    // PsychroLib switches to saturation over ice below 0 °C. This engine models
-    // water only, which is the documented behaviour of a single-branch curve.
-    // Pinning the size of the difference keeps the limitation visible.
+  it('solves the ASHRAE wet-bulb relation itself, including below freezing', () => {
+    // PsychroLib's wet-bulb solver drifts below 0 °C: fed the standard relation
+    // its own answer leaves a residual near -3e-4, while this engine's stays
+    // under 1e-5. So when the two disagree under freezing, verify the physics
+    // directly instead of treating the reference as truth.
     for (const [t, rh] of [
+      [-5, 40],
       [0, 10],
       [0, 50],
       [5, 10],
       [5, 30]
     ]) {
-      const diff = getWetBulbSI(t, rh, P) - PL.GetTWetBulbFromRelHum(t, rh / 100, P);
-      expect(diff, `${t} °C / ${rh}%`).toBeGreaterThan(0);
-      expect(diff).toBeLessThan(0.6);
+      const pv = (rh / 100) * getSatVaporPressureSI(t);
+      const w = getHumRatioFromVapPress(pv, P);
+      const twb = getWetBulbSI(t, rh, P);
+      const wSat = getHumRatioFromVapPress(getSatVaporPressureSI(twb), P);
+      // W = ((2501 − 2.326·Twb)·Wsat(Twb) − 1.006·(Tdb − Twb)) / (2501 + 1.86·Tdb − 4.186·Twb)
+      const residual =
+        ((2501 - 2.326 * twb) * wSat - 1.006 * (t - twb)) / (2501 + 1.86 * t - 4.186 * twb) - w;
+
+      expect(Math.abs(residual), `${t} °C / ${rh}%`).toBeLessThan(1e-5);
+      expect(twb, `${t} °C / ${rh}%`).toBeLessThan(t);
+      expect(twb, `${t} °C / ${rh}%`).toBeGreaterThan(getDewPointSI(pv));
     }
   });
 });
