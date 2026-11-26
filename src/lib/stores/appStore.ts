@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import type { SystemSettings, StatePointInput, StatePointCalculated, UnitSystem, PropertyType } from '../psychrometrics/types';
 import { evaluateStatePoint, calculateDelta } from '../psychrometrics/engine';
 import { cToF } from '../psychrometrics/unitConverter';
@@ -274,8 +274,11 @@ export function removePointInput(id: string) {
 
 // Function to toggle unit system and adjust default parameters appropriately
 export function setUnitSystem(unitSystem: UnitSystem) {
-  settingsStore.update((s) => {
-    if (s.unitSystem === unitSystem) return s;
+	// Re-selecting the active unit must not convert the point values again:
+	// the conversion below assumes the inputs are still in the other system.
+	if (get(settingsStore).unitSystem === unitSystem) return;
+
+	settingsStore.update((s) => {
     const isSI = unitSystem === 'SI';
     return {
       unitSystem,
